@@ -1,0 +1,1 @@
+import{bK as i}from"./DcMXELSG.js";function o(){const t=i("(max-width: 767px)"),s=i("(min-width: 768px) and (max-width: 1023px)"),e=i("(min-width: 1024px)");return{isMobile:t,isTablet:s,isDesktop:e}}export{o as u};
