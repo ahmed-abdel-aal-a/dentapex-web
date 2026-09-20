@@ -1,0 +1,1 @@
+import{u as s}from"./t0LSyKF0.js";import{a as r,J as u}from"./CJ9phNe4.js";function v(){const{fetchOverdueInvoices:t}=s(),e=r("reports.home:overdue",()=>[]),o=r("reports.home:overdue-loaded",()=>!1);async function a(){return e.value=await t(),o.value=!0,e.value}return{overdue:u(e),overdueLoaded:u(o),loadOverdue:a}}export{v as u};

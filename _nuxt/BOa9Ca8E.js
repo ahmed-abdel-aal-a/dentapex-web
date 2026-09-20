@@ -1,1 +1,0 @@
-import{a as i,v as l,aG as f}from"./DoZiU0xS.js";function r(){const a=i("databus:ticks",()=>({}));function t(s){a.value={...a.value,[s]:(a.value[s]??0)+1}}function u(s,o){const n=l(()=>a.value[s]??0,(e,c)=>{e!==c&&o()});f(n)}return{publish:t,on:u}}export{r as u};

@@ -1,0 +1,1 @@
+import{b as s,m as o,b3 as u}from"./CJ9phNe4.js";function r(){const{locale:e,setLocale:c,locales:l}=s(),t=o(()=>l.value.map(a=>({code:a.code,name:a.name})));async function n(a){localStorage.setItem(u.LOCALE,a),await c(a)}return{locale:e,currentLocale:o(()=>e.value),availableLocales:t,changeLocale:n}}export{r as u};
