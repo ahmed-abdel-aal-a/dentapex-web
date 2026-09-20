@@ -23,7 +23,18 @@ async function isSystemInitialized(): Promise<boolean> {
 }
 
 export default defineNuxtRouteMiddleware(async (to) => {
+  const config = useRuntimeConfig()
   const auth = useAuth()
+
+  // In Simulator / Standalone Web Demo Mode: Zero-friction guest access
+  const isSimulator = config.public.demoMode || !config.public.apiBaseUrl
+  if (isSimulator) {
+    await auth.init()
+    if (to.path === '/login' || to.path === SETUP_PATH || to.path === '/set-password') {
+      return navigateTo('/')
+    }
+    return
+  }
 
   // ``/p/budget/<token>`` is the patient-facing budget view (ADR 0006),
   // authorized server-side via a token-scoped 2FA cookie; let it render.

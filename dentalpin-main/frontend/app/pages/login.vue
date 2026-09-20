@@ -6,6 +6,19 @@ definePageMeta({
 const { t } = useI18n()
 const auth = useAuth()
 const toast = useToast()
+const router = useRouter()
+const config = useRuntimeConfig()
+const isSimulator = config.public.demoMode || !config.public.apiBaseUrl
+
+if (isSimulator && import.meta.client) {
+  router.replace('/')
+}
+
+onMounted(() => {
+  if (isSimulator) {
+    router.replace('/')
+  }
+})
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 

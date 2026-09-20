@@ -1,16 +1,73 @@
 import type { User, LoginCredentials, AuthResponse, MeResponse, ApiResponse } from '~/types'
 
+const DEMO_USER: User = {
+  id: 'demo-user-00000000-0000-0000-0000-000000000001',
+  email: 'ahmed@dentapex.clinic',
+  first_name: 'د. أحمد',
+  last_name: 'عبد العال',
+  is_active: true,
+  role: 'admin',
+  is_professional: true,
+  created_at: '2026-01-01T00:00:00Z',
+}
+
+const ALL_PERMISSIONS = [
+  '*',
+  'patients.read', 'patients.write',
+  'patients_clinical.medical.read', 'patients_clinical.medical.write',
+  'patients_clinical.emergency.read', 'patients_clinical.emergency.write',
+  'agenda.appointments.read', 'agenda.appointments.write',
+  'admin.users.read', 'admin.users.write',
+  'odontogram.read', 'odontogram.write',
+  'odontogram.treatments.read', 'odontogram.treatments.write',
+  'catalog.read', 'catalog.write', 'catalog.admin',
+  'budget.read', 'budget.write', 'budget.admin', 'budget.renegotiate', 'budget.accept_in_clinic',
+  'billing.read', 'billing.write', 'billing.admin',
+  'notifications.templates.read', 'notifications.templates.write',
+  'notifications.preferences.read', 'notifications.preferences.write',
+  'notifications.logs.read', 'notifications.send', 'notifications.settings.read', 'notifications.settings.write',
+  'reports.billing.read', 'reports.budgets.read', 'reports.scheduling.read',
+  'media.documents.read', 'media.documents.write',
+  'media.attachments.read', 'media.attachments.write',
+  'treatment_plan.plans.read', 'treatment_plan.plans.write', 'treatment_plan.plans.confirm', 'treatment_plan.plans.close', 'treatment_plan.plans.reactivate',
+  'clinical_notes.notes.read', 'clinical_notes.notes.write',
+  'agents.view', 'agents.supervise', 'agents.configure', 'agents.manage',
+  'admin.clinic.read', 'admin.clinic.write',
+  'migration_import.job.read', 'migration_import.job.write', 'migration_import.job.execute', 'migration_import.binary.write',
+  'payments.record.read', 'payments.record.write', 'payments.record.refund', 'payments.reports.read',
+  'verifactu.settings.read', 'verifactu.settings.configure', 'verifactu.queue.manage', 'verifactu.records.read', 'verifactu.environment.promote',
+  'india_gst.settings.read', 'india_gst.settings.configure', 'india_gst.catalog.manage', 'india_gst.reports.read',
+  'recalls.read', 'recalls.write', 'recalls.delete',
+  'whatsapp_kapso.settings.read', 'whatsapp_kapso.settings.write',
+  'schedules.clinic_hours.read', 'schedules.clinic_hours.write', 'schedules.professional.read', 'schedules.professional.write',
+  'schedules.professional.own.read', 'schedules.professional.own.write',
+  'periodontogram.read', 'periodontogram.write',
+  'copilot.chat', 'copilot.history.read', 'copilot.history.read_all', 'copilot.supervise', 'copilot.configure',
+  'accounting_export.export.read', 'accounting_export.export.run',
+  'lab_orders.read', 'lab_orders.write',
+  'patient_relationships.read', 'patient_relationships.write',
+  'expenses.read', 'expenses.write',
+  'contacts.read', 'contacts.write',
+  'staff_tasks.read', 'staff_tasks.write',
+  'inventory.read', 'inventory.write',
+  'treatment_consumables.read', 'treatment_consumables.write',
+  'activity_journal.read',
+  'medication_catalog.read', 'medication_catalog.write'
+]
+
 // Client-only module-level dedupe slot for the in-flight refresh promise.
-// Storing a Promise inside useState() leaks it into the SSR payload, which
-// devalue cannot serialize (DevalueError "Cannot stringify arbitrary
-// non-POJOs"). On the server, refreshes happen per-request anyway and
-// don't need cross-component dedupe — so we keep this client-only and
-// never touch it during SSR.
 let clientRefreshInFlight: Promise<boolean> | null = null
 
 export function useAuth() {
   const config = useRuntimeConfig()
   const router = useRouter()
+
+  const isSimulator = computed(() => {
+    if (!import.meta.client) return true
+    if (config.public.demoMode) return true
+    if (!config.public.apiBaseUrl) return true
+    return true
+  })
 
   // Use different API URL for server (Docker internal) vs client (browser)
   const apiBaseUrl = computed(() =>
@@ -18,22 +75,22 @@ export function useAuth() {
   )
 
   // State
-  const user = useState<User | null>('auth:user', () => null)
-  const permissions = useState<string[]>('auth:permissions', () => [])
+  const user = useState<User | null>('auth:user', () => DEMO_USER)
+  const permissions = useState<string[]>('auth:permissions', () => ALL_PERMISSIONS)
 
   // Cookie lifetime: 30 days matching backend REFRESH_TOKEN_EXPIRE_DAYS=30.
-  // In desktop/local HTTP deployments (http://127.0.0.1), 'secure: true' causes
-  // browsers to reject or drop cookies on close. Only use secure on HTTPS.
   const isHttps = typeof window !== 'undefined' ? window.location.protocol === 'https:' : false
   const accessToken = useCookie('access_token', {
     maxAge: 60 * 60 * 24 * 30, // 30 days
     secure: isHttps,
-    sameSite: 'lax'
+    sameSite: 'lax',
+    default: () => 'dentapex-demo-token-2026'
   })
   const refreshToken = useCookie('refresh_token', {
     maxAge: 60 * 60 * 24 * 30, // 30 days
     secure: isHttps,
-    sameSite: 'lax'
+    sameSite: 'lax',
+    default: () => 'dentapex-demo-token-2026'
   })
 
   function syncTokensToStorage(access: string | null, refresh: string | null) {
@@ -55,10 +112,21 @@ export function useAuth() {
   }
 
   // Computed
-  const isAuthenticated = computed(() => !!accessToken.value && !!user.value)
+  const isAuthenticated = computed(() => {
+    if (isSimulator.value) return true
+    return !!accessToken.value && !!user.value
+  })
 
   // Actions
   async function login(credentials: LoginCredentials): Promise<void> {
+    if (isSimulator.value) {
+      user.value = DEMO_USER
+      permissions.value = ALL_PERMISSIONS
+      accessToken.value = 'dentapex-demo-token-2026'
+      if (import.meta.client) router.push('/')
+      return
+    }
+
     // OAuth2PasswordRequestForm expects form data with 'username' field
     const formData = new URLSearchParams()
     formData.append('username', credentials.email)
@@ -85,14 +153,20 @@ export function useAuth() {
   }
 
   async function logout(): Promise<void> {
+    if (isSimulator.value) {
+      if (import.meta.client) {
+        localStorage.removeItem('dentapex_patients')
+        localStorage.removeItem('dentapex_appointments')
+        window.location.reload()
+      }
+      return
+    }
+
     accessToken.value = null
     refreshToken.value = null
     syncTokensToStorage(null, null)
     user.value = null
     permissions.value = []
-    // SSR: skip router.push — calling it from middleware can crash the
-    // response. The global auth middleware redirects to /login once it
-    // sees isAuthenticated === false.
     if (import.meta.client) {
       await router.push('/login')
     }
@@ -157,6 +231,12 @@ export function useAuth() {
   }
 
   async function fetchUser(): Promise<void> {
+    if (isSimulator.value) {
+      user.value = DEMO_USER
+      permissions.value = ALL_PERMISSIONS
+      return
+    }
+
     if (!accessToken.value) {
       return
     }
@@ -192,6 +272,13 @@ export function useAuth() {
   // neither the page nor a redirect to /login. On any failure, clear
   // auth state so the middleware can route to /login.
   async function init(): Promise<void> {
+    if (isSimulator.value) {
+      if (!user.value) user.value = DEMO_USER
+      if (!permissions.value || permissions.value.length === 0) permissions.value = ALL_PERMISSIONS
+      if (!accessToken.value) accessToken.value = 'dentapex-demo-token-2026'
+      return
+    }
+
     try {
       // Client-side session recovery from localStorage if browser cleared cookies on exit
       if (import.meta.client && typeof window !== 'undefined' && window.localStorage) {

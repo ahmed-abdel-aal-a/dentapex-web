@@ -1,5 +1,23 @@
 import type { Cabinet, CabinetCreate, CabinetUpdate, Clinic, ClinicMembership, ClinicUpdate, PaginatedResponse, ApiResponse } from '~/types'
 
+const DEMO_CLINIC: Clinic = {
+  id: 'demo-clinic-00000000-0000-0000-0000-000000000001',
+  name: 'عيادة دنت أپكس الاستعراضية النموذجية',
+  tax_id: 'EG-998877665',
+  legal_name: 'عيادة دنت أپكس لطب وجراحة وتجميل الأسنان',
+  phone: '+201000000000',
+  email: 'demo@dentapex.clinic',
+  address: { city: 'القاهرة', street: 'شارع التحرير، وسط البلد' },
+  timezone: 'Africa/Cairo',
+  currency: 'EGP',
+  settings: { slot_duration_min: 15 },
+  cabinets: [
+    { id: 'cab-1', name: 'العيادة 1 (الكرسي الرئيسي)', is_active: true, display_order: 1 },
+    { id: 'cab-2', name: 'العيادة 2 (كرسي علاج الجذور)', is_active: true, display_order: 2 },
+    { id: 'cab-3', name: 'العيادة 3 (كرسي الجراحة والزراعة)', is_active: true, display_order: 3 },
+  ]
+} as any
+
 /**
  * Context-free access to the clinic state (only ``useState``). Use from
  * code that may run outside a component setup — e.g. getting-started
@@ -8,11 +26,12 @@ import type { Cabinet, CabinetCreate, CabinetUpdate, Clinic, ClinicMembership, C
  */
 export function useClinicState() {
   return {
-    currentClinic: useState<Clinic | null>('clinic:current', () => null)
+    currentClinic: useState<Clinic | null>('clinic:current', () => DEMO_CLINIC)
   }
 }
 
 export function useClinic() {
+  const config = useRuntimeConfig()
   const api = useApi()
   const auth = useAuth()
   const toast = useToast()
@@ -30,6 +49,11 @@ export function useClinic() {
 
   // Actions
   async function fetchClinic(): Promise<void> {
+    if (config.public.demoMode || !config.public.apiBaseUrl) {
+      currentClinic.value = DEMO_CLINIC
+      return
+    }
+
     if (!auth.isAuthenticated.value) {
       return
     }

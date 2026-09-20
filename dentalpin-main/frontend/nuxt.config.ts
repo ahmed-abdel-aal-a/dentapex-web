@@ -103,7 +103,7 @@ export default defineNuxtConfig({
     public: {
       // Client-side (browser): Default empty string ensures relative URL resolving to current origin on both desktop & mobile tunnel
       apiBaseUrl: process.env.API_BASE_URL || '',
-      demoMode: process.env.NUXT_PUBLIC_DEMO_MODE === 'true',
+      demoMode: true,
       // Documentation portal origin used by the in-app help drawer
       // (Fase 5 of issue #75). Empty disables the help button.
       docsUrl: process.env.NUXT_PUBLIC_DOCS_URL || 'https://docs.dentapex.com',

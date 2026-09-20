@@ -141,6 +141,174 @@ export const useDemoStore = defineStore('dentapex-demo', () => {
   const appointments = ref<DemoAppointment[]>([])
   const odontograms = ref<Record<string, Record<string, DemoToothRecord>>>({})
 
+  const invoices = ref([
+    {
+      id: 'inv-001',
+      invoice_number: 'INV-2026-001',
+      number: 'INV-2026-001',
+      patient_id: 'p-1',
+      patient_name: 'سارة أحمد محمود',
+      issue_date: '2026-09-18',
+      due_date: '2026-09-18',
+      total: 3500,
+      total_amount: 3500,
+      paid_amount: 3500,
+      status: 'paid',
+      currency: 'EGP',
+      series_id: 'ser-1',
+      items: [
+        { id: 'item-1', description: 'تاج زيركون تجميلي كامل للضرس العلوي', quantity: 1, unit_price: 3500, total: 3500 }
+      ]
+    },
+    {
+      id: 'inv-002',
+      invoice_number: 'INV-2026-002',
+      number: 'INV-2026-002',
+      patient_id: 'p-2',
+      patient_name: 'محمود عبد الرحمن الشريف',
+      issue_date: '2026-09-19',
+      due_date: '2026-09-26',
+      total: 2200,
+      total_amount: 2200,
+      paid_amount: 1000,
+      status: 'partially_paid',
+      currency: 'EGP',
+      series_id: 'ser-1',
+      items: [
+        { id: 'item-2', description: 'علاج جذور وعصب ثلاث قنوات مع حشو مؤقت', quantity: 1, unit_price: 2200, total: 2200 }
+      ]
+    },
+    {
+      id: 'inv-003',
+      invoice_number: 'INV-2026-003',
+      number: 'INV-2026-003',
+      patient_id: 'p-3',
+      patient_name: 'مريم حسن عبد الله',
+      issue_date: '2026-09-20',
+      due_date: '2026-09-20',
+      total: 800,
+      total_amount: 800,
+      paid_amount: 800,
+      status: 'paid',
+      currency: 'EGP',
+      series_id: 'ser-1',
+      items: [
+        { id: 'item-3', description: 'كشف واستشارة وتشخيص + تنظيف وتلميع أسنان', quantity: 1, unit_price: 800, total: 800 }
+      ]
+    }
+  ])
+
+  const budgets = ref([
+    {
+      id: 'bud-001',
+      budget_number: 'EST-2026-001',
+      number: 'EST-2026-001',
+      patient_id: 'p-1',
+      patient_name: 'سارة أحمد محمود',
+      title: 'خطة زراعة الأسنان والتركيبات التجميلية',
+      total: 13000,
+      total_amount: 13000,
+      status: 'accepted',
+      created_at: '2026-09-15',
+      currency: 'EGP',
+      items: [
+        { id: 'bi-1', description: 'زرعة أسنان تيتانيوم سويسرية', quantity: 1, unit_price: 9500, total: 9500 },
+        { id: 'bi-2', description: 'تاج زيركون فوق الزرعة', quantity: 1, unit_price: 3500, total: 3500 }
+      ]
+    },
+    {
+      id: 'bud-002',
+      budget_number: 'EST-2026-002',
+      number: 'EST-2026-002',
+      patient_id: 'p-4',
+      patient_name: 'عمر طارق النجار',
+      title: 'خطة علاج تقويم الأسنان الشفاف (Invisalign)',
+      total: 28000,
+      total_amount: 28000,
+      status: 'pending',
+      created_at: '2026-09-19',
+      currency: 'EGP',
+      items: [
+        { id: 'bi-3', description: 'تقويم أسنان شفاف شامل المتابعة والجبائر', quantity: 1, unit_price: 28000, total: 28000 }
+      ]
+    }
+  ])
+
+  const treatmentPlans = ref([
+    {
+      id: 'tp-001',
+      patient_id: 'p-1',
+      patient_name: 'سارة أحمد محمود',
+      title: 'إعادة تأهيل القوس العلوي والزراعة',
+      status: 'active',
+      progress: 50,
+      created_at: '2026-09-10',
+      total_cost: 13000,
+      steps: [
+        { id: 's-1', title: 'خلع الجذر المتبقي وتنظيف الجيب', status: 'completed' },
+        { id: 's-2', title: 'غرس الزرعة التيتانيوم وتطعيم العظم', status: 'completed' },
+        { id: 's-3', title: 'أخذ المقاسات الرقمية للتاج', status: 'pending' },
+        { id: 's-4', title: 'تثبيت تاج الزيركون النهائي', status: 'pending' }
+      ]
+    }
+  ])
+
+  const inventory = ref([
+    { id: 'inv-1', name: 'مخدر موضعي أرتيكائين 4% (Septanest)', sku: 'ART-400', stock: 45, min_stock: 10, unit: 'أمبول', category: 'أدوية وتخدير', price: 18 },
+    { id: 'inv-2', name: 'حشوة كمبوزيت تجميلي 3M Filtek (A2)', sku: 'CMP-A2', stock: 14, min_stock: 4, unit: 'سرنجة', category: 'حشوات تجميلية', price: 650 },
+    { id: 'inv-3', name: 'حشوة كمبوزيت تجميلي 3M Filtek (A3)', sku: 'CMP-A3', stock: 9, min_stock: 4, unit: 'سرنجة', category: 'حشوات تجميلية', price: 650 },
+    { id: 'inv-4', name: 'زرعات تيتانيوم Straumann 4.1x10mm', sku: 'IMP-ST-41', stock: 6, min_stock: 2, unit: 'علبة', category: 'جراحة وزراعة', price: 3800 },
+    { id: 'inv-5', name: 'مبارد علاج الجذور الدوارة (Protaper Gold)', sku: 'ENDO-PTG', stock: 22, min_stock: 5, unit: 'باكيت', category: 'علاج الجذور', price: 420 },
+    { id: 'inv-6', name: 'قفازات فحص طبية لاتكس (مقاس M)', sku: 'GLV-LAT-M', stock: 35, min_stock: 10, unit: 'علبة 100ق', category: 'مستهلكات ووقاية', price: 150 }
+  ])
+
+  const labOrders = ref([
+    {
+      id: 'lab-001',
+      order_number: 'LAB-2026-012',
+      patient_id: 'p-1',
+      patient_name: 'سارة أحمد محمود',
+      lab_name: 'معمل الأهرام المتخصص لتركيبات الأسنان',
+      work_type: 'تاج زيركون كامل (Full Zirconia Crown)',
+      shade: 'A2',
+      status: 'in_progress',
+      order_date: '2026-09-18',
+      due_date: '2026-09-24',
+      cost: 1100
+    },
+    {
+      id: 'lab-002',
+      order_number: 'LAB-2026-013',
+      patient_id: 'p-4',
+      patient_name: 'عمر طارق النجار',
+      lab_name: 'معمل ديجيتال سمايل لتكنولوجيا الكاد كام',
+      work_type: 'حافظ مسافة وقالب تبييض منزلي',
+      shade: 'N/A',
+      status: 'completed',
+      order_date: '2026-09-14',
+      due_date: '2026-09-18',
+      cost: 450
+    }
+  ])
+
+  const contacts = ref([
+    { id: 'con-1', name: 'شركة النيل للتجهيزات الطبية ومستلزمات الأسنان', contact_person: 'م. حسام الدين', type: 'مورد مستلزمات طبية', phone: '+20 100 123 4567', email: 'sales@niledental.com' },
+    { id: 'con-2', name: 'معمل الأهرام لتركيبات وزراعة الأسنان', contact_person: 'د. طارق سعيد', type: 'معمل أسنان خارجي', phone: '+20 102 987 6543', email: 'lab@ahramdental.com' },
+    { id: 'con-3', name: 'شركة صيانة أجهزة وأشعة الأسنان (DentTech)', contact_person: 'م. أيمن عادل', type: 'صيانة ودعم فني', phone: '+20 111 555 7788', email: 'support@denttech-eg.com' }
+  ])
+
+  const expenses = ref([
+    { id: 'exp-1', description: 'شراء مستهلكات تخدير وقفازات طبية', amount: 3200, category: 'مستلزمات طبية', payment_method: 'تحويل بنكي', date: '2026-09-18' },
+    { id: 'exp-2', description: 'صيانة دورية لجهاز الأوتوكلاف ووحدة الكرسي', amount: 1500, category: 'صيانة أجهزة', payment_method: 'نقدي', date: '2026-09-15' },
+    { id: 'exp-3', description: 'فاتورة الكهرباء واشتراك الإنترنت السريع', amount: 2400, category: 'مرافق وخدمات', payment_method: 'فوري', date: '2026-09-10' }
+  ])
+
+  const tasks = ref([
+    { id: 'tsk-1', title: 'تعقيم كامل لأدوات ومبارد العصب لعيادة 2', assigned_to: 'مروة (تمريض)', priority: 'high', status: 'done', due_date: '2026-09-20' },
+    { id: 'tsk-2', title: 'استلام تركيبة الزيركون للمريضة سارة والتأكد من المقاس', assigned_to: 'د. ريم', priority: 'medium', status: 'in_progress', due_date: '2026-09-22' },
+    { id: 'tsk-3', title: 'طلب كميات جديدة من أمبولات التخدير قبل نفاد الرصيد', assigned_to: 'أحمد (استقبال)', priority: 'high', status: 'pending', due_date: '2026-09-21' }
+  ])
+
   // --- IndexedDB Helper with Incognito Fallback ---
   const IDB_NAME = 'DentApex_Demo_Sandbox_v2'
   const IDB_VERSION = 1
@@ -640,6 +808,14 @@ export const useDemoStore = defineStore('dentapex-demo', () => {
     patients,
     appointments,
     odontograms,
+    invoices,
+    budgets,
+    treatmentPlans,
+    inventory,
+    labOrders,
+    contacts,
+    expenses,
+    tasks,
     initDemoData,
     getPatient,
     addPatient,

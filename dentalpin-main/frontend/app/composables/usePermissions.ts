@@ -19,18 +19,21 @@ export function usePermissions() {
   }
 
   function can(permission: string): boolean {
+    if (permissions.value.includes('*')) return true
     return moduleActive(permission) && permissions.value.includes(permission)
   }
 
   function canAny(perms: string[]): boolean {
+    if (permissions.value.includes('*')) return true
     return perms.some(can)
   }
 
   function canAll(perms: string[]): boolean {
+    if (permissions.value.includes('*')) return true
     return perms.every(can)
   }
 
-  const isAdmin = computed(() => can(PERMISSIONS.users.write))
+  const isAdmin = computed(() => permissions.value.includes('*') || can(PERMISSIONS.users.write))
 
   return {
     permissions: readonly(permissions),

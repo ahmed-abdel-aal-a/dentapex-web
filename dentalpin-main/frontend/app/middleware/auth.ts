@@ -1,4 +1,11 @@
 export default defineNuxtRouteMiddleware(async (to) => {
+  const config = useRuntimeConfig()
+  const isSimulator = config.public.demoMode || !config.public.apiBaseUrl
+  if (isSimulator) {
+    if (to.path === '/login') return navigateTo('/')
+    return
+  }
+
   const auth = useAuth()
 
   // Initialize auth state

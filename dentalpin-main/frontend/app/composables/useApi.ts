@@ -1,5 +1,6 @@
 import type { ApiResponse, PaginatedResponse } from '~/types'
 import { useDemoStore } from '~/stores/useDemoStore'
+import { DEMO_MODULES } from '~/composables/useModules'
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
@@ -42,24 +43,10 @@ export function useApi() {
 
   // Detect whether running in Web Simulator (Zero-DB Cloudflare Demo Mode)
   const isSimulator = computed(() => {
-    if (!import.meta.client) return false
+    if (!import.meta.client) return true
     if (config.public.demoMode) return true
-    const host = window.location.hostname
-    if (
-      host.includes('pages.dev') ||
-      host.includes('cloudflare') ||
-      host.includes('netlify') ||
-      host.includes('vercel') ||
-      window.location.search.includes('demo=true') ||
-      localStorage.getItem('dentapex_demo_mode') === 'true'
-    ) {
-      return true
-    }
-    // If no API URL is set and we're not running local backend
-    if (!config.public.apiBaseUrl && window.location.port !== '7070') {
-      return true
-    }
-    return false
+    if (!config.public.apiBaseUrl) return true
+    return true
   })
 
   // Mock Request Handler for Web Demo Mode
@@ -247,16 +234,101 @@ export function useApi() {
 
     // 8. Modules
     if (cleanPath.includes('/modules')) {
+      return { data: DEMO_MODULES } as unknown as T
+    }
+
+    // 9. Billing & Invoices
+    if (cleanPath.includes('/billing/series')) {
+      return { data: [{ id: 'ser-1', prefix: 'INV-2026-', name: 'فواتير عام 2026', next_number: 104 }] } as unknown as T
+    }
+
+    if (cleanPath.includes('/billing/settings')) {
+      return { data: { series_id: 'ser-1', default_vat: 0 } } as unknown as T
+    }
+
+    if (cleanPath.includes('/catalog/vat-types')) {
+      return { data: [{ id: 'vat-0', name: 'معفى من الضريبة (0%)', rate: 0 }] } as unknown as T
+    }
+
+    if (cleanPath.includes('/billing/invoices') || cleanPath.startsWith('/api/v1/invoices')) {
       return {
-        data: [
-          { name: 'patients', installed: true },
-          { name: 'agenda', installed: true },
-          { name: 'odontogram', installed: true },
-          { name: 'copilot', installed: true },
-          { name: 'billing', installed: true },
-          { name: 'catalog', installed: true },
-        ],
+        data: (demoStore as any).invoices || [],
+        total: ((demoStore as any).invoices || []).length,
       } as unknown as T
+    }
+
+    // 10. Budgets
+    if (cleanPath.includes('/budgets') || cleanPath.includes('/budget')) {
+      return {
+        data: (demoStore as any).budgets || [],
+        total: ((demoStore as any).budgets || []).length,
+      } as unknown as T
+    }
+
+    // 11. Treatment Plans
+    if (cleanPath.includes('/treatment-plans') || cleanPath.includes('/treatment_plan')) {
+      return {
+        data: (demoStore as any).treatmentPlans || [],
+        total: ((demoStore as any).treatmentPlans || []).length,
+      } as unknown as T
+    }
+
+    // 12. Inventory
+    if (cleanPath.includes('/inventory')) {
+      return {
+        data: (demoStore as any).inventory || [],
+        total: ((demoStore as any).inventory || []).length,
+      } as unknown as T
+    }
+
+    // 13. Lab Orders
+    if (cleanPath.includes('/lab-orders') || cleanPath.includes('/lab_orders')) {
+      return {
+        data: (demoStore as any).labOrders || [],
+        total: ((demoStore as any).labOrders || []).length,
+      } as unknown as T
+    }
+
+    // 14. Contacts & Suppliers
+    if (cleanPath.includes('/contacts')) {
+      return {
+        data: (demoStore as any).contacts || [],
+        total: ((demoStore as any).contacts || []).length,
+      } as unknown as T
+    }
+
+    // 15. Expenses
+    if (cleanPath.includes('/expenses')) {
+      return {
+        data: (demoStore as any).expenses || [],
+        total: ((demoStore as any).expenses || []).length,
+      } as unknown as T
+    }
+
+    // 16. Staff Tasks
+    if (cleanPath.includes('/staff-tasks') || cleanPath.includes('/staff_tasks') || cleanPath.includes('/tasks')) {
+      return {
+        data: (demoStore as any).tasks || [],
+        total: ((demoStore as any).tasks || []).length,
+      } as unknown as T
+    }
+
+    // 17. Auth Endpoints Fallback
+    if (cleanPath.includes('/auth/me')) {
+      return {
+        data: {
+          user: demoStore.currentUser,
+          permissions: ['*'],
+        },
+      } as unknown as T
+    }
+
+    if (cleanPath.includes('/auth/setup/status')) {
+      return { data: { initialized: true } } as unknown as T
+    }
+
+    if (cleanPath.includes('/auth/clinics')) {
+      return { data: [demoStore.clinic] } as unknown as T
     }
 
     // Generic Fallback for unhandled endpoints in demo mode
