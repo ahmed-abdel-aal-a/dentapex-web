@@ -1,0 +1,1 @@
+import{aB as f}from"./D9TCZs5X.js";function l(t,r){if(typeof t!="object"||t===null)return!1;const e=f(t,r);return e!=null&&e!==""}function u(t,r){return r?{xs:44,sm:48,md:52,lg:56,xl:60}[t]:{xs:24,sm:28,md:32,lg:36,xl:40}[t]}function a(t,r,e,o){const n=u(r,!0),i=u(r,!1);return o?()=>n:e?s=>l(t[s],e)?n:i:()=>i}export{a as g};

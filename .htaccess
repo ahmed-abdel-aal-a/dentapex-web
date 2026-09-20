@@ -5,6 +5,11 @@
 
 Options -Indexes
 
+# Block direct access to sensitive key files, dotfiles, and configurations
+<FilesMatch "^\.|\.(key|env|ini|log)$">
+  Require all denied
+</FilesMatch>
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /dentapex/
