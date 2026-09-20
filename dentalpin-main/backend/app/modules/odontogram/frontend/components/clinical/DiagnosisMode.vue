@@ -103,10 +103,11 @@ const sessionTreatmentIds = computed(() =>
 // survive plan churn and may belong to any status.
 const treatmentsToothById = computed<Record<string, number[]>>(() => {
   const map: Record<string, number[]> = {}
+  if (!Array.isArray(treatments.value)) return map
   for (const t of treatments.value) {
-    if (!t.id) continue
-    const teeth = (t.teeth || [])
-      .map(x => x.tooth_number)
+    if (!t?.id || !Array.isArray(t.teeth)) continue
+    const teeth = t.teeth
+      .map(x => x?.tooth_number)
       .filter((n): n is number => typeof n === 'number')
     if (teeth.length) map[t.id] = teeth
   }

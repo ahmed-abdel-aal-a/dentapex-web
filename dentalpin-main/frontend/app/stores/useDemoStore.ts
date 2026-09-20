@@ -140,6 +140,60 @@ export const useDemoStore = defineStore('dentapex-demo', () => {
   const patients = ref<DemoPatient[]>([])
   const appointments = ref<DemoAppointment[]>([])
   const odontograms = ref<Record<string, Record<string, DemoToothRecord>>>({})
+  const patientTreatments = ref<Record<string, any[]>>({})
+
+  function generateTreatmentsFromTeeth(patientId: string, teethRecord: Record<string, DemoToothRecord>): any[] {
+    const list: any[] = []
+    const conditionMap: Record<string, string> = {
+      cavity: 'caries',
+      caries: 'caries',
+      filled: 'filling',
+      filling: 'filling',
+      endo: 'root_canal',
+      root_canal: 'root_canal',
+      crown: 'crown',
+      implant: 'implant',
+      extracted: 'missing',
+      missing: 'missing',
+      veneer: 'veneer',
+      pulpotomy: 'root_canal',
+      space_maintainer: 'filling',
+    }
+
+    for (const [tNumStr, tooth] of Object.entries(teethRecord || {})) {
+      const num = Number(tNumStr)
+      if (isNaN(num)) continue
+      const state = tooth.state || ''
+      const clinicalType = conditionMap[state]
+      if (!clinicalType || state === 'sound' || state === 'healthy') continue
+
+      list.push({
+        id: `trt-${patientId}-${num}`,
+        clinical_type: clinicalType,
+        scope: 'tooth',
+        status: 'existing',
+        catalog_item_id: null,
+        teeth: [
+          {
+            id: `tt-${patientId}-${num}`,
+            tooth_record_id: `tooth-${patientId}-${num}`,
+            tooth_number: num,
+            role: null,
+            surfaces: Array.isArray(tooth.surfaces) ? tooth.surfaces : []
+          }
+        ],
+        recorded_at: new Date().toISOString(),
+        performed_at: new Date().toISOString(),
+        performed_by_name: 'د. أحمد عبد العال',
+        notes: tooth.notes || '',
+        source_module: 'odontogram',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+    }
+
+    return list
+  }
 
   const invoices = ref([
     {
@@ -465,8 +519,13 @@ export const useDemoStore = defineStore('dentapex-demo', () => {
 
           const mapped: Record<string, Record<string, DemoToothRecord>> = {}
           for (const item of storedOdonto) {
-            if (item.patient_id && item.teeth) {
-              mapped[item.patient_id] = item.teeth
+            if (item.patient_id) {
+              if (item.teeth) mapped[item.patient_id] = item.teeth
+              if (item.treatments && Array.isArray(item.treatments) && item.treatments.length > 0) {
+                patientTreatments.value[item.patient_id] = item.treatments
+              } else if (item.teeth) {
+                patientTreatments.value[item.patient_id] = generateTreatmentsFromTeeth(item.patient_id, item.teeth)
+              }
             }
           }
           odontograms.value = mapped
@@ -494,7 +553,9 @@ export const useDemoStore = defineStore('dentapex-demo', () => {
       if (rawOdonto && (rawOdonto as any).patients_odontogram) {
         const mapped: Record<string, Record<string, DemoToothRecord>> = {}
         for (const [pid, data] of Object.entries<any>((rawOdonto as any).patients_odontogram)) {
-          mapped[pid] = data.teeth || {}
+          const teeth = data.teeth || {}
+          mapped[pid] = teeth
+          patientTreatments.value[pid] = generateTreatmentsFromTeeth(pid, teeth)
         }
         odontograms.value = mapped
       }
@@ -514,7 +575,11 @@ export const useDemoStore = defineStore('dentapex-demo', () => {
           for (const p of patients.value) pStore.put(safeClone(p))
           for (const a of appointments.value) aStore.put(safeClone(a))
           for (const [pid, teeth] of Object.entries(odontograms.value)) {
-            oStore.put(safeClone({ patient_id: pid, teeth }))
+            oStore.put(safeClone({
+              patient_id: pid,
+              teeth,
+              treatments: patientTreatments.value[pid] || []
+            }))
           }
         } catch {
           isIncognitoMode.value = true
@@ -772,6 +837,131 @@ export const useDemoStore = defineStore('dentapex-demo', () => {
     }
   }
 
+  async function persistOdontogram(patientId: string) {
+    const db = await getIDB()
+    if (db) {
+      try {
+        const tx = db.transaction('odontograms', 'readwrite')
+        tx.objectStore('odontograms').put(safeClone({
+          patient_id: patientId,
+          teeth: odontograms.value[patientId] || {},
+          treatments: patientTreatments.value[patientId] || [],
+        }))
+      } catch {
+        isIncognitoMode.value = true
+      }
+    }
+  }
+
+  function getPatientTreatments(patientId: string): any[] {
+    if (!patientTreatments.value[patientId] || patientTreatments.value[patientId].length === 0) {
+      const rawTeeth = odontograms.value[patientId] || {}
+      patientTreatments.value[patientId] = generateTreatmentsFromTeeth(patientId, rawTeeth)
+    }
+    return patientTreatments.value[patientId]
+  }
+
+  async function createPatientTreatment(patientId: string, payload: any) {
+    if (!patientTreatments.value[patientId]) {
+      patientTreatments.value[patientId] = getPatientTreatments(patientId)
+    }
+
+    const treatmentId = `trt-${patientId}-${Date.now()}`
+    const toothNumbers: number[] = Array.isArray(payload.tooth_numbers)
+      ? payload.tooth_numbers
+      : (Array.isArray(payload.teeth) ? payload.teeth.map((t: any) => t.tooth_number) : [])
+
+    const teethList = toothNumbers.map((num: number) => {
+      const role = Array.isArray(payload.teeth)
+        ? payload.teeth.find((t: any) => t.tooth_number === num)?.role || null
+        : null
+      return {
+        id: `tt-${treatmentId}-${num}`,
+        tooth_record_id: `tooth-${patientId}-${num}`,
+        tooth_number: num,
+        role,
+        surfaces: Array.isArray(payload.surfaces) ? payload.surfaces : []
+      }
+    })
+
+    const clinicalType = payload.clinical_type || 'caries'
+    const status = payload.status || 'existing'
+
+    const treatment = {
+      id: treatmentId,
+      clinical_type: clinicalType,
+      scope: payload.scope || (toothNumbers.length > 1 ? 'multi_tooth' : 'tooth'),
+      arch: payload.arch || null,
+      status,
+      catalog_item_id: payload.catalog_item_id || null,
+      teeth: teethList,
+      recorded_at: new Date().toISOString(),
+      performed_at: (status === 'performed' || status === 'existing') ? new Date().toISOString() : null,
+      performed_by_name: 'د. أحمد عبد العال',
+      notes: payload.notes || '',
+      source_module: 'odontogram',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+
+    patientTreatments.value[patientId].push(treatment)
+
+    // Synchronize odontograms.value so the tooth SVG visuals update instantly
+    if (!odontograms.value[patientId]) {
+      odontograms.value[patientId] = {}
+    }
+
+    for (const num of toothNumbers) {
+      const tKey = String(num)
+      const existingTooth = odontograms.value[patientId][tKey] || {}
+      odontograms.value[patientId][tKey] = {
+        ...existingTooth,
+        state: clinicalType,
+        surfaces: Array.isArray(payload.surfaces) && payload.surfaces.length ? payload.surfaces : (existingTooth.surfaces || []),
+        notes: payload.notes || existingTooth.notes || ''
+      }
+    }
+
+    await persistOdontogram(patientId)
+    return treatment
+  }
+
+  async function updatePatientTreatment(treatmentId: string, data: any) {
+    for (const [pid, list] of Object.entries(patientTreatments.value)) {
+      const idx = list.findIndex(t => t.id === treatmentId)
+      if (idx >= 0) {
+        const updated = {
+          ...list[idx],
+          ...data,
+          updated_at: new Date().toISOString()
+        }
+        list[idx] = updated
+        await persistOdontogram(pid)
+        return updated
+      }
+    }
+    return null
+  }
+
+  async function deletePatientTreatment(treatmentId: string): Promise<boolean> {
+    for (const [pid, list] of Object.entries(patientTreatments.value)) {
+      const idx = list.findIndex(t => t.id === treatmentId)
+      if (idx >= 0) {
+        list.splice(idx, 1)
+        await persistOdontogram(pid)
+        return true
+      }
+    }
+    return false
+  }
+
+  async function performPatientTreatment(treatmentId: string) {
+    return updatePatientTreatment(treatmentId, {
+      status: 'performed',
+      performed_at: new Date().toISOString()
+    })
+  }
+
   async function updateToothRecord(patientId: string, toothNumber: string | number, record: DemoToothRecord) {
     const tNum = String(toothNumber)
     if (!odontograms.value[patientId]) {
@@ -785,19 +975,7 @@ export const useDemoStore = defineStore('dentapex-demo', () => {
       state: record.general_condition || record.state || 'healthy',
     }
 
-    // Background Async Sync
-    const db = await getIDB()
-    if (db) {
-      try {
-        const tx = db.transaction('odontograms', 'readwrite')
-        tx.objectStore('odontograms').put(safeClone({
-          patient_id: patientId,
-          teeth: odontograms.value[patientId],
-        }))
-      } catch {
-        isIncognitoMode.value = true
-      }
-    }
+    await persistOdontogram(patientId)
   }
 
   async function resetDemoData() {
@@ -817,6 +995,7 @@ export const useDemoStore = defineStore('dentapex-demo', () => {
     patients,
     appointments,
     odontograms,
+    patientTreatments,
     invoices,
     budgets,
     treatmentPlans,
@@ -835,6 +1014,11 @@ export const useDemoStore = defineStore('dentapex-demo', () => {
     updateAppointment,
     deleteAppointment,
     getOdontogramData,
+    getPatientTreatments,
+    createPatientTreatment,
+    updatePatientTreatment,
+    deletePatientTreatment,
+    performPatientTreatment,
     updateToothRecord,
     resetDemoData,
   }

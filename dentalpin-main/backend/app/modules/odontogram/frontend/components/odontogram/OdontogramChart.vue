@@ -229,7 +229,7 @@ function getToothData(toothNumber: number) {
 }
 
 function treatmentIncludesTooth(treatment: Treatment, toothNumber: number): boolean {
-  return treatment.teeth.some(t => t.tooth_number === toothNumber)
+  return Array.isArray(treatment?.teeth) ? treatment.teeth.some(t => t.tooth_number === toothNumber) : false
 }
 
 /** Return per-tooth views for a given tooth number, honoring statusFilter. */

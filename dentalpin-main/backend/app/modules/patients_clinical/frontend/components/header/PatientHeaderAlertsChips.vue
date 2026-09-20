@@ -23,7 +23,7 @@ const patientId = computed(() => props.ctx.patient.id)
 const { alerts, getAlertIcon, getSeverityColor } = usePatientAlerts(patientId)
 
 const importantAlerts = computed<PatientAlert[]>(() =>
-  alerts.value.filter(a => a.severity === 'critical' || a.severity === 'high')
+  Array.isArray(alerts.value) ? alerts.value.filter(a => a?.severity === 'critical' || a?.severity === 'high') : []
 )
 </script>
 

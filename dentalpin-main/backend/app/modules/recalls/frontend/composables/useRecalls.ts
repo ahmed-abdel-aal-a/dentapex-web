@@ -301,7 +301,7 @@ export function usePatientRecalls(patientId: string) {
     isLoading.value = true
     try {
       const res = await api.listForPatient(patientId)
-      recalls.value = res.data
+      recalls.value = Array.isArray(res?.data) ? res.data : []
       loaded.value = true
     } catch {
       recalls.value = []
@@ -317,9 +317,9 @@ export function usePatientRecalls(patientId: string) {
   }
 
   const activeRecalls = computed(() =>
-    recalls.value.filter(r =>
-      ['pending', 'contacted_no_answer', 'contacted_scheduled'].includes(r.status)
-    )
+    Array.isArray(recalls.value) ? recalls.value.filter(r =>
+      r && ['pending', 'contacted_no_answer', 'contacted_scheduled'].includes(r.status)
+    ) : []
   )
 
   // Most-due active recall (smallest due_month wins; tiebreaker on

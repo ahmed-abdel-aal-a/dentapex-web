@@ -28,7 +28,7 @@ function toBackendStatus(v: TreatmentStatus | undefined): 'planned' | 'performed
 }
 
 function fromBackendStatus(v: string | undefined | null): TreatmentStatus {
-  return v === 'performed' ? 'existing' : 'planned'
+  return (v === 'performed' || v === 'existing') ? 'existing' : 'planned'
 }
 
 function normalizeTreatment<T extends { status: string }>(treatment: T): T {
@@ -54,7 +54,7 @@ export function useTreatments() {
   /** Treatments whose teeth[] includes the given tooth. */
   function getToothTreatments(toothNumber: number): Treatment[] {
     return treatments.value.filter(t =>
-      t.teeth.some(tt => tt.tooth_number === toothNumber)
+      Array.isArray(t?.teeth) && t.teeth.some(tt => tt.tooth_number === toothNumber)
     )
   }
 
@@ -91,7 +91,8 @@ export function useTreatments() {
       if (params.toString()) url += `?${params.toString()}`
 
       const response = await api.get<PaginatedResponse<Treatment>>(url)
-      treatments.value = response.data.map(normalizeTreatment)
+      const list = Array.isArray(response?.data) ? response.data : []
+      treatments.value = list.filter(t => t && Array.isArray(t.teeth)).map(normalizeTreatment)
     } catch (err) {
       console.error('Error fetching treatments:', err)
     } finally {

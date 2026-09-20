@@ -11,7 +11,8 @@
 import type { Surface, ToothTreatmentView, Treatment } from '~/types'
 
 export function viewForTooth(treatment: Treatment, toothNumber: number): ToothTreatmentView | null {
-  const member = treatment.teeth.find(t => t.tooth_number === toothNumber)
+  if (!treatment || !Array.isArray(treatment.teeth)) return null
+  const member = treatment.teeth.find(t => t?.tooth_number === toothNumber)
   if (!member) return null
   return {
     id: `${treatment.id}:${member.id}`,
@@ -40,7 +41,9 @@ export function viewForTooth(treatment: Treatment, toothNumber: number): ToothTr
 
 export function viewsForTooth(treatments: Treatment[], toothNumber: number): ToothTreatmentView[] {
   const out: ToothTreatmentView[] = []
+  if (!Array.isArray(treatments)) return out
   for (const treatment of treatments) {
+    if (!treatment) continue
     const v = viewForTooth(treatment, toothNumber)
     if (v) out.push(v)
   }

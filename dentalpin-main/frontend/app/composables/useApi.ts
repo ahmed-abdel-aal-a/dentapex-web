@@ -156,12 +156,41 @@ export function useApi() {
 
     // 3. Odontogram Endpoints
     if (cleanPath.includes('/odontogram')) {
-      if (cleanPath.includes('/odontogram')) {
-        const m = cleanPath.match(/patients\/([^/]+)\/odontogram/)
+      if (cleanPath.includes('/timeline')) {
+        return { data: { dates: [], total: 0 } } as unknown as T
+      }
+
+      if (cleanPath.includes('/treatments')) {
+        const m = cleanPath.match(/patients\/([^/]+)\/treatments/)
         if (m && m[1]) {
           const patientId = m[1]
-          const odonto = demoStore.getOdontogramData(patientId)
-          return { data: odonto } as unknown as T
+          if (method === 'GET') {
+            const list = demoStore.getPatientTreatments(patientId)
+            return {
+              data: list,
+              total: list.length,
+              page: 1,
+              page_size: 50
+            } as unknown as T
+          } else if (method === 'POST') {
+            const created = await demoStore.createPatientTreatment(patientId, body || {})
+            return { data: created } as unknown as T
+          }
+        }
+      }
+
+      const trtMatch = cleanPath.match(/odontogram\/treatments\/([^/]+)/)
+      if (trtMatch && trtMatch[1]) {
+        const treatmentId = trtMatch[1]
+        if (cleanPath.endsWith('/perform')) {
+          const updated = await demoStore.performPatientTreatment(treatmentId)
+          return { data: updated } as unknown as T
+        } else if (method === 'PUT' || method === 'PATCH') {
+          const updated = await demoStore.updatePatientTreatment(treatmentId, body || {})
+          return { data: updated } as unknown as T
+        } else if (method === 'DELETE') {
+          await demoStore.deletePatientTreatment(treatmentId)
+          return { data: { success: true } } as unknown as T
         }
       }
 
@@ -182,6 +211,13 @@ export function useApi() {
       if (cleanPath.includes('/history')) {
         return { data: [], total: 0 } as unknown as T
       }
+
+      const m = cleanPath.match(/patients\/([^/]+)\/odontogram/)
+      if (m && m[1]) {
+        const patientId = m[1]
+        const odonto = demoStore.getOdontogramData(patientId)
+        return { data: odonto } as unknown as T
+      }
     }
 
     // 4. Clinical Settings & Resources
@@ -201,7 +237,8 @@ export function useApi() {
       return { data: demoStore.clinic } as unknown as T
     }
 
-    if (cleanPath.includes('/catalog') || cleanPath.includes('/treatments')) {
+    // Strictly limit catalog to catalog routes, NEVER intercept patient treatments
+    if (cleanPath.startsWith('/api/v1/catalog') || cleanPath.endsWith('/catalog/treatments')) {
       return {
         data: demoStore.treatmentsCatalog,
         total: demoStore.treatmentsCatalog.length,
@@ -392,6 +429,9 @@ export function useApi() {
 
     // 19. Recalls Endpoints
     if (cleanPath.includes('/recalls')) {
+      if (cleanPath.includes('/patients/')) {
+        return { data: [], total: 0, page: 1, page_size: 50 } as unknown as T
+      }
       return {
         data: {
           due_this_week: 4,
@@ -429,6 +469,79 @@ export function useApi() {
         }
       ]
       return { data: demoBranches } as unknown as T
+    }
+
+    // 21. Patients Clinical (Medical History & Alerts)
+    if (cleanPath.startsWith('/api/v1/patients_clinical') || cleanPath.includes('/patients_clinical')) {
+      if (cleanPath.includes('/medical-history')) {
+        const m = cleanPath.match(/patients\/([^/]+)\/medical-history/)
+        const patientId = m ? m[1] : null
+        const patient = patientId ? demoStore.getPatient(patientId) : null
+        const medHistory = {
+          allergies: (patient?.allergies || []).map((a: string, idx: number) => ({
+            id: `alg-${idx}`,
+            allergen: a,
+            severity: 'high',
+            notes: ''
+          })),
+          medications: [],
+          systemic_diseases: (patient?.diseases || []).map((d: string, idx: number) => ({
+            id: `dis-${idx}`,
+            disease_name: d,
+            status: 'controlled',
+            notes: ''
+          })),
+          surgical_history: [],
+          is_pregnant: patient?.medical_notes?.includes('حامل') || false,
+          pregnancy_week: patient?.medical_notes?.includes('حامل') ? 16 : undefined,
+          is_lactating: false,
+          is_on_anticoagulants: false,
+          anticoagulant_medication: undefined,
+          inr_value: undefined,
+          last_inr_date: undefined,
+          is_smoker: false,
+          smoking_frequency: undefined,
+          alcohol_consumption: undefined,
+          bruxism: false,
+          adverse_reactions_to_anesthesia: false,
+          anesthesia_reaction_details: undefined,
+          last_updated_at: new Date().toISOString(),
+          last_updated_by: 'د. أحمد عبد العال'
+        }
+        return { data: medHistory } as unknown as T
+      }
+
+      if (cleanPath.includes('/alerts')) {
+        const m = cleanPath.match(/patients\/([^/]+)\/alerts/)
+        const patientId = m ? m[1] : null
+        const patient = patientId ? demoStore.getPatient(patientId) : null
+        const alertsList = (patient?.allergies || []).map((a: string, idx: number) => ({
+          id: `alt-${idx}`,
+          type: 'allergy',
+          severity: 'high',
+          title: a,
+          details: `حساسية مسجلة: ${a}`,
+          created_at: new Date().toISOString()
+        }))
+        return { data: { alerts: alertsList } } as unknown as T
+      }
+    }
+
+    // 22. Clinical Notes
+    if (cleanPath.startsWith('/api/v1/clinical_notes') || cleanPath.includes('/clinical_notes')) {
+      if (method === 'GET') {
+        return { data: [], total: 0 } as unknown as T
+      } else if (method === 'POST') {
+        const noteId = `cn-${Date.now()}`
+        return {
+          data: {
+            id: noteId,
+            ...(body || {}),
+            created_at: new Date().toISOString(),
+            author_name: 'د. أحمد عبد العال'
+          }
+        } as unknown as T
+      }
     }
 
     // Generic Fallback for unhandled endpoints in demo mode

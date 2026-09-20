@@ -22,22 +22,22 @@ const patientId = computed(() => props.ctx.patient.id)
 const { medicalHistory, isLoading } = useMedicalHistory(patientId)
 const { alerts, isLoading: loadingAlerts } = usePatientAlerts(patientId)
 
-const allergyCount = computed(() => medicalHistory.value.allergies.length)
-const diseaseCount = computed(() => medicalHistory.value.systemic_diseases.length)
-const medicationCount = computed(() => medicalHistory.value.medications.length)
+const allergyCount = computed(() => medicalHistory.value?.allergies?.length || 0)
+const diseaseCount = computed(() => medicalHistory.value?.systemic_diseases?.length || 0)
+const medicationCount = computed(() => medicalHistory.value?.medications?.length || 0)
 
 const topAllergies = computed(() =>
-  medicalHistory.value.allergies.slice(0, 2)
+  medicalHistory.value?.allergies?.slice(0, 2) || []
 )
 const topDiseases = computed(() =>
-  medicalHistory.value.systemic_diseases.slice(0, 2)
+  medicalHistory.value?.systemic_diseases?.slice(0, 2) || []
 )
 
 const hasCriticalAlerts = computed(() =>
-  alerts.value.some(a => a.severity === 'critical')
+  Array.isArray(alerts.value) ? alerts.value.some(a => a.severity === 'critical') : false
 )
 const hasHighAlerts = computed(() =>
-  alerts.value.some(a => a.severity === 'high')
+  Array.isArray(alerts.value) ? alerts.value.some(a => a.severity === 'high') : false
 )
 
 const severity = computed<'neutral' | 'info' | 'warning' | 'danger'>(() => {
@@ -55,7 +55,7 @@ const isEmpty = computed(() =>
   allergyCount.value === 0
   && diseaseCount.value === 0
   && medicationCount.value === 0
-  && alerts.value.length === 0
+  && (alerts.value?.length || 0) === 0
 )
 </script>
 
