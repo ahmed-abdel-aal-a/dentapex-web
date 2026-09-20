@@ -16,7 +16,9 @@ export function useDensity() {
   const cookie = useCookie<Density>(STORAGE_KEYS.DENSITY, {
     default: () => 'comfortable',
     sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 365
+    maxAge: 60 * 60 * 24 * 365,
+    encode: (val: any) => String(val ?? 'comfortable'),
+    decode: (val: string) => (val === 'compact' ? 'compact' : 'comfortable')
   })
 
   const density = useState<Density>('ui:density', () => cookie.value ?? 'comfortable')

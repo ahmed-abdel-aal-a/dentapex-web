@@ -1,9 +1,22 @@
 import type { Branch, BranchCreate, BranchUpdate, ApiResponse } from '~/types'
 
+const DEFAULT_DEMO_BRANCH: Branch = {
+  id: 'br-main',
+  clinic_id: 'demo-clinic-00000000-0000-0000-0000-000000000001',
+  name: 'الفرع الرئيسي (وسط البلد)',
+  code: 'MAIN',
+  address: 'شارع التحرير، وسط البلد، القاهرة',
+  phone: '+201000000000',
+  is_main: true,
+  is_active: true,
+  created_at: '2026-01-01T00:00:00Z',
+  updated_at: '2026-01-01T00:00:00Z'
+}
+
 export function useBranchState() {
   return {
-    branches: useState<Branch[]>('clinic:branches', () => []),
-    currentBranch: useState<Branch | null>('clinic:current_branch', () => null),
+    branches: useState<Branch[]>('clinic:branches', () => [DEFAULT_DEMO_BRANCH]),
+    currentBranch: useState<Branch | null>('clinic:current_branch', () => DEFAULT_DEMO_BRANCH),
     isLoading: useState<boolean>('clinic:branches_loading', () => false)
   }
 }

@@ -76,7 +76,7 @@ const kpis = computed(() => {
     {
       key: 'completed',
       label: t('dashboard.weekGlance.completed'),
-      value: cs ? `${cs.completed} (${cs.completion_rate.toFixed(0)}%)` : '—',
+      value: cs ? `${cs.completed ?? 0} (${(cs.completion_rate ?? 0).toFixed(0)}%)` : '—',
       delta: cs && ps ? delta(cs.completed, ps.completed) : null
     },
     {
@@ -158,7 +158,7 @@ const allMissing = computed(() =>
             name="i-lucide-minus"
             class="w-3 h-3"
           />
-          {{ k.delta.pct === 0 ? '0%' : `${k.delta.pct > 0 ? '+' : ''}${k.delta.pct.toFixed(0)}%` }}
+          {{ k.delta.pct === 0 ? '0%' : `${k.delta.pct > 0 ? '+' : ''}${(k.delta.pct ?? 0).toFixed(0)}%` }}
         </p>
       </div>
     </div>

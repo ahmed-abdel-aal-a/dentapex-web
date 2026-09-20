@@ -340,6 +340,15 @@ export const useDemoStore = defineStore('dentapex-demo', () => {
     }
   }
 
+  // --- Safe Serializer to Strip Vue 3 Reactive Proxies for IndexedDB ---
+  function safeClone<T>(obj: T): T {
+    try {
+      return JSON.parse(JSON.stringify(obj))
+    } catch {
+      return obj
+    }
+  }
+
   // --- Helpers for Normalizing Seed Records ---
   function normalizePatient(p: any): DemoPatient {
     const fullName = `${p.first_name || ''} ${p.last_name || ''}`.trim()
@@ -502,10 +511,10 @@ export const useDemoStore = defineStore('dentapex-demo', () => {
           aStore.clear()
           oStore.clear()
 
-          for (const p of patients.value) pStore.put(p)
-          for (const a of appointments.value) aStore.put(a)
+          for (const p of patients.value) pStore.put(safeClone(p))
+          for (const a of appointments.value) aStore.put(safeClone(a))
           for (const [pid, teeth] of Object.entries(odontograms.value)) {
-            oStore.put({ patient_id: pid, teeth })
+            oStore.put(safeClone({ patient_id: pid, teeth }))
           }
         } catch {
           isIncognitoMode.value = true
@@ -543,7 +552,7 @@ export const useDemoStore = defineStore('dentapex-demo', () => {
     if (db) {
       try {
         const tx = db.transaction('patients', 'readwrite')
-        tx.objectStore('patients').put(newPatient)
+        tx.objectStore('patients').put(safeClone(newPatient))
       } catch {
         isIncognitoMode.value = true
       }
@@ -568,7 +577,7 @@ export const useDemoStore = defineStore('dentapex-demo', () => {
     if (db) {
       try {
         const tx = db.transaction('patients', 'readwrite')
-        tx.objectStore('patients').put(updated)
+        tx.objectStore('patients').put(safeClone(updated))
       } catch {
         isIncognitoMode.value = true
       }
@@ -615,7 +624,7 @@ export const useDemoStore = defineStore('dentapex-demo', () => {
     if (db) {
       try {
         const tx = db.transaction('appointments', 'readwrite')
-        tx.objectStore('appointments').put(newAppt)
+        tx.objectStore('appointments').put(safeClone(newAppt))
       } catch {
         isIncognitoMode.value = true
       }
@@ -640,7 +649,7 @@ export const useDemoStore = defineStore('dentapex-demo', () => {
     if (db) {
       try {
         const tx = db.transaction('appointments', 'readwrite')
-        tx.objectStore('appointments').put(updated)
+        tx.objectStore('appointments').put(safeClone(updated))
       } catch {
         isIncognitoMode.value = true
       }
@@ -781,10 +790,10 @@ export const useDemoStore = defineStore('dentapex-demo', () => {
     if (db) {
       try {
         const tx = db.transaction('odontograms', 'readwrite')
-        tx.objectStore('odontograms').put({
+        tx.objectStore('odontograms').put(safeClone({
           patient_id: patientId,
           teeth: odontograms.value[patientId],
-        })
+        }))
       } catch {
         isIncognitoMode.value = true
       }

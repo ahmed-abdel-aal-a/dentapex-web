@@ -66,6 +66,13 @@ export function useApi() {
 
     // 1. Patients Endpoints
     if (cleanPath.startsWith('/api/v1/patients')) {
+      // 1.a Recent patients endpoint (Home Dashboard widget)
+      if (cleanPath.includes('/patients/recent')) {
+        const limit = Number(query?.limit) || 6
+        const recentList = demoStore.patients.slice(0, limit)
+        return { data: recentList } as unknown as T
+      }
+
       const parts = cleanPath.split('/')
       // Single patient: /api/v1/patients/:id or /api/v1/patients/:id/extended
       if (parts.length >= 5 && parts[4]) {
@@ -329,6 +336,99 @@ export function useApi() {
 
     if (cleanPath.includes('/auth/clinics')) {
       return { data: [demoStore.clinic] } as unknown as T
+    }
+
+    // 18. Reports Endpoints (Week Glance & Overdue Dashboard KPI)
+    if (cleanPath.includes('/reports/scheduling/summary')) {
+      return {
+        data: {
+          period_start: (query?.date_from as string) || '2026-09-14',
+          period_end: (query?.date_to as string) || '2026-09-20',
+          total_appointments: 14,
+          completed: 10,
+          cancelled: 1,
+          no_show: 1,
+          scheduled: 2,
+          confirmed: 0,
+          checked_in: 0,
+          in_treatment: 0,
+          completion_rate: 71.4,
+          cancellation_rate: 7.1,
+          no_show_rate: 7.1,
+        }
+      } as unknown as T
+    }
+
+    if (cleanPath.includes('/reports/billing/summary')) {
+      return {
+        data: {
+          period_start: (query?.date_from as string) || '2026-09-14',
+          period_end: (query?.date_to as string) || '2026-09-20',
+          total_invoiced: '6500.00',
+          total_paid: '5300.00',
+          total_outstanding: '1200.00',
+          invoice_count: 3
+        }
+      } as unknown as T
+    }
+
+    if (cleanPath.includes('/reports/billing/overdue')) {
+      return {
+        data: [
+          {
+            id: 'inv-od-1',
+            invoice_number: 'INV-2026-002',
+            patient_name: 'محمود عبد الرحمن الشريف',
+            patient_id: 'p-2',
+            issue_date: '2026-09-01',
+            due_date: '2026-09-08',
+            total: 2200,
+            balance_due: 1200,
+            days_overdue: 12
+          }
+        ]
+      } as unknown as T
+    }
+
+    // 19. Recalls Endpoints
+    if (cleanPath.includes('/recalls')) {
+      return {
+        data: {
+          due_this_week: 4,
+          overdue: 2,
+          scheduled_this_month: 8,
+          conversion_rate: 0.75
+        }
+      } as unknown as T
+    }
+
+    // 20. Branches Endpoints
+    if (cleanPath.includes('/branches')) {
+      const demoBranches = [
+        {
+          id: 'br-main',
+          clinic_id: demoStore.clinic.id,
+          name: 'الفرع الرئيسي (وسط البلد)',
+          code: 'MAIN',
+          address: 'شارع التحرير، وسط البلد، القاهرة',
+          phone: '+201000000000',
+          is_main: true,
+          is_active: true,
+          created_at: new Date().toISOString()
+        },
+        {
+          id: 'br-nasr-city',
+          clinic_id: demoStore.clinic.id,
+          name: 'فرع مدينة نصر',
+          code: 'NC',
+          address: 'شارع عباس العقاد، مدينة نصر، القاهرة',
+          phone: '+201000000001',
+          is_main: false,
+          is_active: true,
+          created_at: new Date().toISOString()
+        }
+      ]
+      return { data: demoBranches } as unknown as T
     }
 
     // Generic Fallback for unhandled endpoints in demo mode

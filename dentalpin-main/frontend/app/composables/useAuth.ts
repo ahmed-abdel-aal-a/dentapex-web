@@ -80,17 +80,21 @@ export function useAuth() {
 
   // Cookie lifetime: 30 days matching backend REFRESH_TOKEN_EXPIRE_DAYS=30.
   const isHttps = typeof window !== 'undefined' ? window.location.protocol === 'https:' : false
-  const accessToken = useCookie('access_token', {
+  const accessToken = useCookie<string>('access_token', {
     maxAge: 60 * 60 * 24 * 30, // 30 days
     secure: isHttps,
     sameSite: 'lax',
-    default: () => 'dentapex-demo-token-2026'
+    default: () => 'dentapex-demo-token-2026',
+    encode: (val: any) => String(val ?? ''),
+    decode: (val: string) => val
   })
-  const refreshToken = useCookie('refresh_token', {
+  const refreshToken = useCookie<string>('refresh_token', {
     maxAge: 60 * 60 * 24 * 30, // 30 days
     secure: isHttps,
     sameSite: 'lax',
-    default: () => 'dentapex-demo-token-2026'
+    default: () => 'dentapex-demo-token-2026',
+    encode: (val: any) => String(val ?? ''),
+    decode: (val: string) => val
   })
 
   function syncTokensToStorage(access: string | null, refresh: string | null) {

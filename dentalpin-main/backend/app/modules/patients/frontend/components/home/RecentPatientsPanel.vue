@@ -12,13 +12,17 @@ const pending = ref(true)
 async function load() {
   try {
     const res = await api.get<ApiResponse<Patient[]>>('/api/v1/patients/recent?limit=6')
-    patients.value = res.data
+    patients.value = Array.isArray(res.data) ? res.data.filter(Boolean) : []
   } catch {
     patients.value = []
   } finally {
     pending.value = false
   }
 }
+
+const validPatients = computed(() =>
+  Array.isArray(patients.value) ? patients.value.filter(p => p && p.id) : []
+)
 
 onMounted(load)
 onActivated(load)
@@ -66,7 +70,7 @@ function relative(iso: string): string {
     </div>
 
     <EmptyState
-      v-else-if="patients.length === 0"
+      v-else-if="validPatients.length === 0"
       icon="i-lucide-users"
       :title="t('dashboard.recent.empty')"
     />
@@ -76,7 +80,7 @@ function relative(iso: string): string {
       class="divide-y divide-[var(--color-border-subtle)]"
     >
       <li
-        v-for="p in patients"
+        v-for="p in validPatients"
         :key="p.id"
       >
         <ListRow :to="`/patients/${p.id}`">
