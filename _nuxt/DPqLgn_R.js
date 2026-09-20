@@ -1,0 +1,1 @@
+import{_ as t}from"./BF8ZY6AO.js";import{_ as o}from"./DlAUqK2U.js";import{e as n,f as c,j as r,g as a,O as _}from"./DoZiU0xS.js";const f={},l={class:"min-h-screen flex flex-col bg-canvas"},m={class:"flex-1 flex items-center justify-center"};function i(e,d){const s=t;return n(),c("div",l,[r(s),a("div",m,[_(e.$slots,"default")])])}const h=o(f,[["render",i]]);export{h as default};

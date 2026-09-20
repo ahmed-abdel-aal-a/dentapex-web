@@ -1,0 +1,1 @@
+const e=()=>({fallbackLocale:"en",missingWarn:!1,fallbackWarn:!1,pluralRules:{pl:(n,a)=>{if(n===1)return 0;const l=n%100>=12&&n%100<=14,r=n%10>=2&&n%10<=4&&!l;return a===2||r?1:2}}});export{e as default};

@@ -1,0 +1,1 @@
+function o(t,r){return typeof t=="object"&&t!==null?e(t)??t.message??r:r}function e(t){if(typeof t!="object"||t===null)return;const r=t;if(typeof r.data?.detail=="string")return r.data.detail;if(typeof r.data?.message=="string")return r.data.message}function n(t){if(typeof t=="object"&&t!==null)return t.statusCode}export{n as a,o as b,e};
