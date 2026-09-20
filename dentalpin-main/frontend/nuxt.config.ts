@@ -107,8 +107,8 @@ export default defineNuxtConfig({
       // Documentation portal origin used by the in-app help drawer
       // (Fase 5 of issue #75). Empty disables the help button.
       docsUrl: process.env.NUXT_PUBLIC_DOCS_URL || 'https://docs.dentapex.com',
-      // Cloudflare Edge Worker gateway for Night Copilot & Private R2 Vault
-      edgeWorkerUrl: process.env.NUXT_PUBLIC_EDGE_WORKER_URL || 'https://dentapex-demo.pages.dev',
+      // Cloudflare Edge Worker gateway for Night Copilot & Private R2 Vault (Defaults to local PHP proxy)
+      edgeWorkerUrl: process.env.NUXT_PUBLIC_EDGE_WORKER_URL || '',
       // Module layers baked into this build. `usePermissions().can()`
       // hides their permissions while the backend reports the module as
       // not installed (prod bakes every layer — see Dockerfile.prod).

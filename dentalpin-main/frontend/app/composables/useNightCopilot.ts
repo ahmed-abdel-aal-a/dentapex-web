@@ -74,8 +74,8 @@ ${patSample}`
     onDone: () => void,
     onError: (err: string) => void
   ): Promise<void> {
-    const edgeWorkerUrl = (config.public.edgeWorkerUrl || '').replace(/\/$/, '')
-    const targetUrl = edgeWorkerUrl ? `${edgeWorkerUrl}/api/edge/copilot` : '/api/copilot/chat'
+    const base = (config.app.baseURL || '/dentapex/').replace(/\/$/, '')
+    const targetUrl = `${base}/api/copilot/chat.php`
     const token = auth.accessToken.value || 'dentapex-demo-guest-token'
 
     const context = await buildLocalContext()
@@ -104,7 +104,7 @@ ${context}
         },
         body: JSON.stringify({
           messages,
-          model: 'llama-3.3-70b-versatile',
+          model: 'allam-2-7b',
           temperature: 0.3
         })
       })
@@ -136,6 +136,10 @@ ${context}
             }
             try {
               const parsed = JSON.parse(dataStr)
+              if (parsed.error?.message) {
+                onError(parsed.error.message)
+                return
+              }
               const content = parsed.choices?.[0]?.delta?.content || ''
               if (content) onChunk(content)
             } catch {
@@ -145,8 +149,9 @@ ${context}
         }
       }
       onDone()
-    } catch {
-      onError('تعذر الاتصال بخدمة الذكاء الاصطناعي حالياً. يرجى التحقق من اتصال الإنترنت والمحاولة لاحقاً.')
+    } catch (err: any) {
+      const errorMsg = err?.message || 'تعذر الاتصال بخدمة الذكاء الاصطناعي حالياً. يرجى التحقق من اتصال الإنترنت والمحاولة لاحقاً.'
+      onError(errorMsg)
     }
   }
 
