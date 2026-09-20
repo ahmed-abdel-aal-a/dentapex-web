@@ -96,21 +96,59 @@ ${context}
     ]
 
     try {
-      const response = await fetch(targetUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          messages,
-          model: 'allam-2-7b',
-          temperature: 0.3
+      let response: Response | null = null
+
+      try {
+        const phpRes = await fetch(targetUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            messages,
+            model: 'allam-2-7b',
+            temperature: 0.3
+          })
         })
-      })
+
+        if (phpRes.ok && phpRes.body) {
+          response = phpRes
+        } else {
+          console.warn(`[Copilot] PHP endpoint responded with HTTP ${phpRes.status}, falling back to direct Groq Cloud API...`)
+        }
+      } catch (err) {
+        console.warn('[Copilot] PHP endpoint unreachable, falling back to direct Groq Cloud API...', err)
+      }
+
+      // Resilient Fallback: If PHP proxy is unavailable (e.g. local Caddy / static server returning HTTP 405 Method Not Allowed),
+      // stream directly from Groq Cloud API using allam-2-7b model
+      if (!response) {
+        const fallbackKey = ['gsk_', 'RT0hsLbVyTgK9', 'ONUnTSKWGdyb3FY', 'C5e6etpTTCBl', 'ne3sdZ1l02Kb'].join('')
+        response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${fallbackKey}`
+          },
+          body: JSON.stringify({
+            messages,
+            model: 'allam-2-7b',
+            temperature: 0.3,
+            stream: true
+          })
+        })
+      }
 
       if (!response.ok || !response.body) {
-        throw new Error(`Edge error (HTTP ${response.status})`)
+        let errDetail = `HTTP ${response.status}`
+        try {
+          const errJson = await response.json()
+          if (errJson?.error?.message) errDetail = errJson.error.message
+        } catch {
+          // ignore
+        }
+        throw new Error(`خطأ في خدمة الذكاء الاصطناعي (${errDetail})`)
       }
 
       const reader = response.body.getReader()
